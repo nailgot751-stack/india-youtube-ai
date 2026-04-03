@@ -1,0 +1,5 @@
+{
+  "name": "VidFlow",
+  "description": "A modern, responsive video streaming platform inspired by YouTube, featuring a sleek mobile-first design, video playback, and content discovery.",
+  "requestFramePermissions": []
+}

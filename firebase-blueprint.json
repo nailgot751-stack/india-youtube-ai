@@ -1,0 +1,24 @@
+{
+  "entities": {
+    "ChatMessage": {
+      "title": "Chat Message",
+      "description": "A message sent in the live chat during a video.",
+      "type": "object",
+      "properties": {
+        "videoId": { "type": "string", "description": "The ID of the video the chat belongs to." },
+        "userId": { "type": "string", "description": "The UID of the user who sent the message." },
+        "userName": { "type": "string", "description": "The display name of the user." },
+        "userAvatar": { "type": "string", "description": "The avatar URL of the user." },
+        "text": { "type": "string", "description": "The content of the message." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the message was sent." }
+      },
+      "required": ["videoId", "userId", "userName", "text", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/videos/{videoId}/chat": {
+      "schema": "ChatMessage",
+      "description": "Collection of chat messages for a specific video."
+    }
+  }
+}

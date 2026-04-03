@@ -1,0 +1,73 @@
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// This security rules file assumes the following data structures:
+//
+// Collection: /videos/{videoId}/chat
+// Document ID: auto-generated
+// Fields:
+//   - videoId: string (required) - The ID of the video the chat belongs to.
+//   - userId: string (required) - The UID of the user who sent the message.
+//   - userName: string (required) - The display name of the user.
+//   - userAvatar: string (optional) - The avatar URL of the user.
+//   - text: string (required, max 500 chars) - The content of the message.
+//   - createdAt: timestamp (required) - When the message was sent.
+//
+// ===============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+    
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+    
+    function isValidMessage(data) {
+      return data.videoId is string &&
+             data.userId == request.auth.uid &&
+             data.userName is string &&
+             data.userName.size() > 0 &&
+             data.userName.size() < 100 &&
+             data.text is string &&
+             data.text.size() > 0 &&
+             data.text.size() <= 500 &&
+             data.createdAt == request.time;
+    }
+
+    match /videos/{videoId}/chat/{messageId} {
+      // Anyone can read chat messages
+      allow read: if true;
+      
+      // Only authenticated users can create messages
+      allow create: if isAuthenticated() && 
+                      hasRequiredFields(['videoId', 'userId', 'userName', 'text', 'createdAt']) &&
+                      hasOnlyAllowedFields(['videoId', 'userId', 'userName', 'userAvatar', 'text', 'createdAt']) &&
+                      isValidMessage(request.resource.data);
+      
+      // Messages are immutable
+      allow update, delete: if false;
+    }
+    
+    match /test/connection {
+      allow read: if true;
+    }
+  }
+}
