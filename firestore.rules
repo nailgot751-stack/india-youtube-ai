@@ -14,6 +14,23 @@
 //   - text: string (required, max 500 chars) - The content of the message.
 //   - createdAt: timestamp (required) - When the message was sent.
 //
+// Collection: /videos
+// Document ID: auto-generated
+// Fields:
+//   - title: string (required)
+//   - description: string (optional)
+//   - videoUrl: string (required)
+//   - thumbnail: string (optional)
+//   - userId: string (required)
+//   - channelName: string (required)
+//   - channelAvatar: string (optional)
+//   - views: string (optional)
+//   - likes: string (optional)
+//   - duration: string (optional)
+//   - postedAt: timestamp (required)
+//   - subscribers: string (optional)
+//   - chapters: array (optional) - List of {timestamp: number, title: string}
+//
 // ===============================================================
 
 rules_version = '2';
@@ -52,6 +69,46 @@ service cloud.firestore {
              data.createdAt == request.time;
     }
 
+    function isValidVideo(data) {
+      return data.title is string &&
+             data.title.size() > 0 &&
+             data.title.size() < 200 &&
+             data.videoUrl is string &&
+             data.userId == request.auth.uid &&
+             data.channelName is string &&
+             data.postedAt == request.time &&
+             (!('chapters' in data) || (
+               data.chapters is list &&
+               data.chapters.size() <= 50
+             ));
+    }
+
+    function isValidSubscription(data) {
+      return data.userId == request.auth.uid &&
+             data.channelName is string &&
+             data.channelName.size() > 0 &&
+             data.createdAt == request.time;
+    }
+
+    function isValidChannel(data) {
+      return data.userId == request.auth.uid &&
+             data.updatedAt == request.time &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             (!('description' in data) || (data.description is string && data.description.size() <= 1000)) &&
+             (!('bannerUrl' in data) || (data.bannerUrl is string && isValidUrl(data.bannerUrl))) &&
+             (!('avatarUrl' in data) || (data.avatarUrl is string && isValidUrl(data.avatarUrl)));
+    }
+
+    match /videos/{videoId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && 
+                      hasRequiredFields(['title', 'videoUrl', 'userId', 'channelId', 'channelName', 'postedAt']) &&
+                      isValidVideo(request.resource.data);
+      allow update: if isOwner(resource.data.userId) && 
+                      isValidVideo(request.resource.data);
+      allow delete: if isOwner(resource.data.userId);
+    }
+
     match /videos/{videoId}/chat/{messageId} {
       // Anyone can read chat messages
       allow read: if true;
@@ -64,6 +121,26 @@ service cloud.firestore {
       
       // Messages are immutable
       allow update, delete: if false;
+    }
+
+    match /subscriptions/{subId} {
+      // Only the user can read their own subscriptions
+      allow read: if isOwner(resource.data.userId);
+      // Only the user can create their own subscriptions
+      allow create: if isAuthenticated() && 
+                      hasRequiredFields(['userId', 'channelName', 'createdAt']) &&
+                      isValidSubscription(request.resource.data);
+      // Only the user can delete their own subscriptions
+      allow delete: if isOwner(resource.data.userId);
+    }
+
+    match /channels/{userId} {
+      // Anyone can read channel info
+      allow read: if true;
+      // Only the owner can manage their channel
+      allow create, update: if isOwner(userId) &&
+                             isValidChannel(request.resource.data);
+      allow delete: if isOwner(userId);
     }
     
     match /test/connection {

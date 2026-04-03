@@ -13,12 +13,84 @@
         "createdAt": { "type": "string", "format": "date-time", "description": "When the message was sent." }
       },
       "required": ["videoId", "userId", "userName", "text", "createdAt"]
+    },
+    "Video": {
+      "title": "Video",
+      "description": "A video uploaded by a user.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "The title of the video." },
+        "description": { "type": "string", "description": "The description of the video." },
+        "videoUrl": { "type": "string", "description": "The URL of the video file in Storage." },
+        "thumbnail": { "type": "string", "description": "The URL of the thumbnail image." },
+        "userId": { "type": "string", "description": "The UID of the user who uploaded the video." },
+        "channelId": { "type": "string", "description": "The ID of the channel the video belongs to." },
+        "channelName": { "type": "string", "description": "The name of the channel." },
+        "channelAvatar": { "type": "string", "description": "The avatar URL of the channel." },
+        "views": { "type": "string", "description": "The number of views." },
+        "likes": { "type": "string", "description": "The number of likes." },
+        "duration": { "type": "string", "description": "The duration of the video." },
+        "postedAt": { "type": "string", "format": "date-time", "description": "When the video was uploaded." },
+        "subscribers": { "type": "string", "description": "The number of subscribers of the channel." },
+        "qualities": { "type": "object", "description": "Map of quality labels to URLs." },
+        "chapters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "timestamp": { "type": "number", "description": "The timestamp in seconds." },
+              "title": { "type": "string", "description": "The title of the chapter." }
+            },
+            "required": ["timestamp", "title"]
+          },
+          "description": "List of video chapters."
+        }
+      },
+      "required": ["title", "videoUrl", "userId", "channelId", "channelName", "postedAt"]
+    },
+    "Subscription": {
+      "title": "Subscription",
+      "description": "A channel subscription for a user.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The UID of the user who is subscribing." },
+        "channelId": { "type": "string", "description": "The ID of the channel being subscribed to." },
+        "channelName": { "type": "string", "description": "The name of the channel being subscribed to." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the subscription was created." }
+      },
+      "required": ["userId", "channelId", "channelName", "createdAt"]
+    },
+    "Channel": {
+      "title": "Channel",
+      "description": "Customization data for a user's channel.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The UID of the user who owns the channel." },
+        "name": { "type": "string", "description": "The name of the channel." },
+        "avatarUrl": { "type": "string", "description": "The avatar URL of the channel." },
+        "bannerUrl": { "type": "string", "description": "The URL of the channel banner image." },
+        "description": { "type": "string", "description": "The description of the channel." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "When the channel data was last updated." }
+      },
+      "required": ["userId", "name", "updatedAt"]
     }
   },
   "firestore": {
+    "/videos": {
+      "schema": "Video",
+      "description": "Collection of all uploaded videos."
+    },
     "/videos/{videoId}/chat": {
       "schema": "ChatMessage",
       "description": "Collection of chat messages for a specific video."
+    },
+    "/subscriptions": {
+      "schema": "Subscription",
+      "description": "Collection of all user subscriptions."
+    },
+    "/channels": {
+      "schema": "Channel",
+      "description": "Collection of channel customization data."
     }
   }
 }
